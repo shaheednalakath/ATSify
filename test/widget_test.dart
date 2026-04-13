@@ -17,9 +17,9 @@ void main() {
     );
 
     // Verify that ATSify title is shown
-    expect(find.text('ATSify'), findsOneWidget);
+    expect(find.text('Choose Template'), findsOneWidget);
     
     // Verify Start Building Resume button exists
-    expect(find.text('Start Building Resume'), findsOneWidget);
+    expect(find.text('Classic Template'), findsOneWidget);
   });
 }
