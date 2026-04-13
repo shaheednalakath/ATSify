@@ -10,10 +10,7 @@ class AdminDashboardScreen extends StatelessWidget {
         title: const Text('Admin Dashboard'),
       ),
       body: const Center(
-        child: Text(
-          'Template and User Management here',
-          style: TextStyle(fontSize: 20),
-        ),
+        child: Text('Admin Dashboard Screen - Empty for now'),
       ),
     );
   }
