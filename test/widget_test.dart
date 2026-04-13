@@ -1,12 +1,20 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 import 'package:atsify/main.dart';
+import 'package:atsify/providers/resume_provider.dart';
 
 void main() {
   testWidgets('App launches and shows TemplateSelectionScreen', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ATSifyApp());
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ResumeProvider()),
+        ],
+        child: const ATSifyApp(),
+      ),
+    );
 
     // Verify that ATSify title is shown
     expect(find.text('ATSify'), findsOneWidget);

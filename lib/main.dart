@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/resume_provider.dart';
 import 'screens/user/template_selection_screen.dart';
 import 'screens/user/resume_builder_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
 
 void main() {
-  runApp(const ATSifyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ResumeProvider()),
+      ],
+      child: const ATSifyApp(),
+    ),
+  );
 }
 
 class ATSifyApp extends StatelessWidget {
