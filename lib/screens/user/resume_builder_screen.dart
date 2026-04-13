@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/resume_form.dart';
 
 class ResumeBuilderScreen extends StatelessWidget {
   const ResumeBuilderScreen({super.key});
@@ -9,9 +10,7 @@ class ResumeBuilderScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Resume Builder'),
       ),
-      body: const Center(
-        child: Text('Resume Builder Screen - Empty for now'),
-      ),
+      body: const ResumeForm(),
     );
   }
 }
