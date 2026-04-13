@@ -1,0 +1,1 @@
+from docx import Document; doc = Document(); doc.add_paragraph('{{name}}'); doc.add_paragraph('{{email}}'); doc.add_paragraph('{{phone}}'); doc.add_paragraph('{{summary}}'); doc.add_paragraph('{{skills}}'); doc.save('assets/template.docx');
