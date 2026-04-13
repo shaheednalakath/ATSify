@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class BuilderScreen extends StatelessWidget {
-  const BuilderScreen({super.key});
+class ResumeBuilderScreen extends StatelessWidget {
+  const ResumeBuilderScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -10,10 +10,7 @@ class BuilderScreen extends StatelessWidget {
         title: const Text('Resume Builder'),
       ),
       body: const Center(
-        child: Text(
-          'Form & Preview will go here',
-          style: TextStyle(fontSize: 20),
-        ),
+        child: Text('Resume Builder Screen - Empty for now'),
       ),
     );
   }
