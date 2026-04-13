@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/resume_provider.dart';
+import '../../services/firestore_service.dart';
 
 class TemplateSelectionScreen extends StatelessWidget {
   const TemplateSelectionScreen({super.key});
 
-  final List<Map<String, String>> templates = const [
+  // Built-in templates (always available)
+  static const List<Map<String, String>> builtInTemplates = [
     {'name': 'Modern Template', 'id': 'modern'},
     {'name': 'Classic Template', 'id': 'classic'},
     {'name': 'Fresher Template', 'id': 'fresher'},
@@ -20,57 +23,160 @@ class TemplateSelectionScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Choose Template'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: 'Admin Login',
+            onPressed: () {
+              Navigator.pushNamed(context, '/admin-login');
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Consumer<ResumeProvider>(
           builder: (context, provider, child) {
-            return GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.8,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: templates.length,
-              itemBuilder: (context, index) {
-                final template = templates[index];
-                final isSelected = provider.selectedTemplate == template['id'];
-
-                return Card(
-                  elevation: isSelected ? 8 : 2,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                      color: isSelected ? Colors.blue : Colors.transparent,
-                      width: 2,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Built-in templates section
+                const Text(
+                  'Built-in Templates',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  flex: 1,
+                  child: GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.9,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    itemCount: builtInTemplates.length,
+                    itemBuilder: (context, index) {
+                      final template = builtInTemplates[index];
+                      final isSelected = provider.selectedTemplate == template['id'];
+
+                      return _buildTemplateCard(
+                        context: context,
+                        name: template['name']!,
+                        templateId: template['id']!,
+                        isSelected: isSelected,
+                        provider: provider,
+                      );
+                    },
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.description, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        template['name']!,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          provider.changeTemplate(template['id']!);
-                          Navigator.pushNamed(context, '/builder');
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+                // Firebase templates section
+                const Text(
+                  'Custom Templates (from Admin)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  flex: 1,
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirestoreService.getTemplates(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text('No custom templates yet.\nAdmin can add them.'),
+                        );
+                      }
+
+                      final templates = snapshot.data!.docs;
+
+                      return GridView.builder(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 0.9,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemCount: templates.length,
+                        itemBuilder: (context, index) {
+                          final data = templates[index].data() as Map<String, dynamic>;
+                          final name = data['name'] ?? 'Unnamed';
+                          final category = data['category'] ?? '';
+
+                          return Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.description, size: 48, color: Colors.grey),
+                                const SizedBox(height: 8),
+                                Text(
+                                  name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                                Text(
+                                  category,
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          );
                         },
-                        child: Text(isSelected ? 'Selected' : 'Select'),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildTemplateCard({
+    required BuildContext context,
+    required String name,
+    required String templateId,
+    required bool isSelected,
+    required ResumeProvider provider,
+  }) {
+    return Card(
+      elevation: isSelected ? 8 : 2,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(
+          color: isSelected ? Colors.blue : Colors.transparent,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.description, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () {
+              provider.changeTemplate(templateId);
+              Navigator.pushNamed(context, '/builder');
+            },
+            child: Text(isSelected ? 'Selected' : 'Select'),
+          ),
+        ],
       ),
     );
   }

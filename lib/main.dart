@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/resume_provider.dart';
 import 'screens/user/template_selection_screen.dart';
 import 'screens/user/resume_builder_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/admin/template_manager_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     MultiProvider(
       providers: [
@@ -35,6 +43,7 @@ class ATSifyApp extends StatelessWidget {
         '/builder': (context) => const ResumeBuilderScreen(),
         '/admin-login': (context) => const AdminLoginScreen(),
         '/admin-dashboard': (context) => const AdminDashboardScreen(),
+        '/template-manager': (context) => const TemplateManagerScreen(),
       },
       debugShowCheckedModeBanner: false,
     );
