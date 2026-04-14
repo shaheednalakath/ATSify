@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/resume_provider.dart';
+import 'form_sections/personal_info_section.dart';
+import 'form_sections/skills_section.dart';
+import 'form_sections/experience_section.dart';
+import 'form_sections/projects_section.dart';
+import 'form_sections/education_section.dart';
+import 'form_sections/certifications_section.dart';
+import 'form_sections/internship_section.dart';
 
 class ResumeForm extends StatefulWidget {
   const ResumeForm({super.key});
@@ -11,134 +18,208 @@ class ResumeForm extends StatefulWidget {
 
 class _ResumeFormState extends State<ResumeForm> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _skillController = TextEditingController();
 
-  @override
-  void dispose() {
-    _skillController.dispose();
-    super.dispose();
-  }
+  void _validate(ResumeProvider provider) {
+    final isValid = _formKey.currentState?.validate() ?? false;
+    final template = provider.selectedTemplate.toLowerCase();
 
-  void _addSkill(ResumeProvider provider) {
-    final newSkill = _skillController.text.trim();
-    if (newSkill.isNotEmpty) {
-      final currentSkills = List<String>.from(provider.resumeData.skills);
-      currentSkills.add(newSkill);
-      provider.updateSkills(currentSkills);
-      _skillController.clear();
+    if (isValid) {
+      // Fresher: require at least 1 project
+      if (template == 'fresher' && provider.resumeData.projects.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️  Fresher template requires at least 1 project.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Resume looks good! Use the download buttons to export.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️  Please fill in all required fields.'),
+          backgroundColor: Colors.deepOrange,
+        ),
+      );
     }
-  }
-
-  void _removeSkill(ResumeProvider provider, String skill) {
-    final currentSkills = List<String>.from(provider.resumeData.skills);
-    currentSkills.remove(skill);
-    provider.updateSkills(currentSkills);
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ResumeProvider>(context);
+    final template = provider.selectedTemplate.toLowerCase();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Personal Details',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: provider.resumeData.name,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                border: OutlineInputBorder(),
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        children: [
+          // Template indicator banner
+          _TemplateBanner(template: template),
+
+          // Scrollable form body
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ─── Common sections (all templates) ────────────────────────
+                  PersonalInfoSection(provider: provider),
+                  const SizedBox(height: 28),
+                  SkillsSection(provider: provider),
+                  const SizedBox(height: 28),
+
+                  // ─── Template-specific sections ──────────────────────────────
+                  ..._buildTemplateSections(context, provider, template),
+                ],
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Name cannot be empty';
-                }
-                return null;
-              },
-              onChanged: (value) => provider.updateName(value),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: provider.resumeData.email,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Email cannot be empty';
-                }
-                return null;
-              },
-              onChanged: (value) => provider.updateEmail(value),
+          ),
+
+          // Validate button pinned at bottom
+          _ValidationBar(onValidate: () => _validate(provider)),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildTemplateSections(
+      BuildContext context, ResumeProvider provider, String template) {
+    switch (template) {
+      // ── MODERN ────────────────────────────────────────────────────────────
+      case 'modern':
+      case 'experience':
+        return [
+          ExperienceSection(provider: provider),
+          const SizedBox(height: 28),
+          ProjectsSection(provider: provider, showLinkField: true, showTechField: true),
+          const SizedBox(height: 28),
+          EducationSection(provider: provider),
+          const SizedBox(height: 28),
+          CertificationsSection(provider: provider, isCourseMode: false),
+        ];
+
+      // ── FRESHER ───────────────────────────────────────────────────────────
+      case 'fresher':
+        return [
+          ProjectsSection(provider: provider, showLinkField: true, showTechField: true),
+          const SizedBox(height: 28),
+          EducationSection(provider: provider),
+          const SizedBox(height: 28),
+          CertificationsSection(provider: provider, isCourseMode: true),
+          const SizedBox(height: 28),
+          InternshipSection(provider: provider),
+        ];
+
+      // ── CLASSIC / BASIC / ALL OTHERS ─────────────────────────────────────
+      default:
+        return [
+          ExperienceSection(provider: provider, optional: true),
+          const SizedBox(height: 28),
+          EducationSection(provider: provider),
+          const SizedBox(height: 28),
+          ProjectsSection(
+              provider: provider, optional: true, showLinkField: false, showTechField: false),
+        ];
+    }
+  }
+}
+
+// ─── Supporting Widgets ───────────────────────────────────────────────────────
+
+class _TemplateBanner extends StatelessWidget {
+  final String template;
+
+  const _TemplateBanner({required this.template});
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, Map<String, dynamic>> info = {
+      'modern': {'label': 'Modern Template', 'color': Colors.blue, 'icon': Icons.rocket_launch},
+      'experience': {
+        'label': 'Experience Template',
+        'color': Colors.indigo,
+        'icon': Icons.work_history
+      },
+      'fresher': {
+        'label': 'Fresher Template',
+        'color': Colors.teal,
+        'icon': Icons.school_outlined
+      },
+      'classic': {'label': 'Classic Template', 'color': Colors.brown, 'icon': Icons.article},
+      'skills': {
+        'label': 'Skills Template',
+        'color': Colors.purple,
+        'icon': Icons.psychology_outlined
+      },
+      'compact': {'label': 'Compact Template', 'color': Colors.grey, 'icon': Icons.compress},
+    };
+
+    final data = info[template] ?? {'label': '${template[0].toUpperCase()}${template.substring(1)} Template', 'color': Colors.blueGrey, 'icon': Icons.description};
+    final color = data['color'] as Color;
+    final icon = data['icon'] as IconData;
+    final label = data['label'] as String;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: color.withValues(alpha: 0.1),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: provider.resumeData.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) => provider.updatePhone(value),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: provider.resumeData.summary,
-              decoration: const InputDecoration(
-                labelText: 'Summary',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 4,
-              onChanged: (value) => provider.updateSummary(value),
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'Skills',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _skillController,
-                    decoration: const InputDecoration(
-                      labelText: 'Add a skill',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _addSkill(provider),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () => _addSkill(provider),
-                  child: const Text('Add Skill'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: provider.resumeData.skills.map((skill) {
-                return Chip(
-                  label: Text(skill),
-                  onDeleted: () => _removeSkill(provider, skill),
-                );
-              }).toList(),
-            ),
-          ],
+          ),
+          const Spacer(),
+          Text(
+            'Filling form for this template',
+            style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValidationBar extends StatelessWidget {
+  final VoidCallback onValidate;
+
+  const _ValidationBar({required this.onValidate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onValidate,
+          icon: const Icon(Icons.check_circle_outline),
+          label: const Text('Validate Resume'),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
         ),
       ),
     );
   }
 }
+
+

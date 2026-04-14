@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/resume_provider.dart';
 import '../../services/firestore_service.dart';
 
@@ -72,27 +71,27 @@ class TemplateSelectionScreen extends StatelessWidget {
                 ),
                 const Divider(),
                 const SizedBox(height: 8),
-                // Firebase templates section
+                // Mock templates section
                 const Text(
-                  'Custom Templates (from Admin)',
+                  'Custom Templates (Local Mock)',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Expanded(
                   flex: 1,
-                  child: StreamBuilder<QuerySnapshot>(
+                  child: StreamBuilder<List<Map<String, dynamic>>>(
                     stream: FirestoreService.getTemplates(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(
                           child: Text('No custom templates yet.\nAdmin can add them.'),
                         );
                       }
 
-                      final templates = snapshot.data!.docs;
+                      final templates = snapshot.data!;
 
                       return GridView.builder(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -103,7 +102,7 @@ class TemplateSelectionScreen extends StatelessWidget {
                         ),
                         itemCount: templates.length,
                         itemBuilder: (context, index) {
-                          final data = templates[index].data() as Map<String, dynamic>;
+                          final data = templates[index];
                           final name = data['name'] ?? 'Unnamed';
                           final category = data['category'] ?? '';
 
@@ -134,6 +133,7 @@ class TemplateSelectionScreen extends StatelessWidget {
                     },
                   ),
                 ),
+
               ],
             );
           },

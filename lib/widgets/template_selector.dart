@@ -10,6 +10,7 @@ import '../templates/compact_template.dart';
 Widget getTemplate(String template, ResumeModel data) {
   switch (template.toLowerCase()) {
     case 'classic':
+    case 'basic':
       return ClassicTemplate(data: data);
     case 'fresher':
       return FresherTemplate(data: data);

@@ -45,16 +45,22 @@ class ResumeBuilderScreen extends StatelessWidget {
             tooltip: 'Download PDF',
             onPressed: () async {
               try {
-                final path = await PdfService.generatePDF(resumeProvider.resumeData);
+                await PdfService.generateAndDownloadPDF(resumeProvider.resumeData);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('PDF Saved: $path')),
+                    const SnackBar(
+                      content: Text('✅ PDF download started!'),
+                      backgroundColor: Colors.green,
+                    ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to save PDF: $e')),
+                    SnackBar(
+                      content: Text('❌ Failed to download PDF: $e'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               }
@@ -66,16 +72,22 @@ class ResumeBuilderScreen extends StatelessWidget {
             tooltip: 'Download Word',
             onPressed: () async {
               try {
-                final path = await DocxService.generateDocx(resumeProvider.resumeData);
+                await DocxService.generateAndDownloadDocx(resumeProvider.resumeData);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('DOCX Saved: $path')),
+                    const SnackBar(
+                      content: Text('✅ Word document download started!'),
+                      backgroundColor: Colors.green,
+                    ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to save DOCX: $e')),
+                    SnackBar(
+                      content: Text('❌ Failed to download DOCX: $e'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               }
@@ -83,6 +95,7 @@ class ResumeBuilderScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
