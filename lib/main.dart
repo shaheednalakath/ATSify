@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/resume_provider.dart';
 import 'screens/user/template_selection_screen.dart';
+import 'screens/landing_page_screen.dart';
 import 'screens/user/resume_builder_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
@@ -35,7 +36,8 @@ class ATSifyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const TemplateSelectionScreen(),
+        '/': (context) => const LandingPageScreen(),
+        '/templates': (context) => const TemplateSelectionScreen(),
         '/builder': (context) => const ResumeBuilderScreen(),
         '/admin-login': (context) => const AdminLoginScreen(),
         '/admin-dashboard': (context) => const AdminDashboardScreen(),
