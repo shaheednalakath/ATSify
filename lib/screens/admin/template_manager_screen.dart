@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firestore_service.dart';
 
 class TemplateManagerScreen extends StatefulWidget {
@@ -140,7 +139,7 @@ class _TemplateManagerScreenState extends State<TemplateManagerScreen> {
             const SizedBox(height: 12),
             // Template list
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: FirestoreService.getTemplates(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -149,16 +148,16 @@ class _TemplateManagerScreenState extends State<TemplateManagerScreen> {
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No templates found.'));
                   }
 
-                  final templates = snapshot.data!.docs;
+                  final templates = snapshot.data!;
 
                   return ListView.builder(
                     itemCount: templates.length,
                     itemBuilder: (context, index) {
-                      final templateData = templates[index].data() as Map<String, dynamic>;
+                      final templateData = templates[index];
                       final sections = (templateData['sections'] as List<dynamic>?)
                               ?.map((s) => s.toString())
                               .join(', ') ??
@@ -173,7 +172,7 @@ class _TemplateManagerScreenState extends State<TemplateManagerScreen> {
                           isThreeLine: true,
                           trailing: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteTemplate(templates[index].id),
+                            onPressed: () => _deleteTemplate(templateData['id']),
                           ),
                         ),
                       );
@@ -182,6 +181,7 @@ class _TemplateManagerScreenState extends State<TemplateManagerScreen> {
                 },
               ),
             ),
+
           ],
         ),
       ),

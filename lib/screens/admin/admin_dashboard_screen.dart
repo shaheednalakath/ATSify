@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 
@@ -74,7 +73,7 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             // User list
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: FirestoreService.getAllUsers(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -83,19 +82,19 @@ class AdminDashboardScreen extends StatelessWidget {
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No users found.'));
                   }
 
-                  final users = snapshot.data!.docs;
+                  final users = snapshot.data!;
 
                   return ListView.builder(
                     itemCount: users.length,
                     itemBuilder: (context, index) {
-                      final userData = users[index].data() as Map<String, dynamic>;
-                      final updatedAt = userData['updatedAt'] as Timestamp?;
+                      final userData = users[index];
+                      final updatedAt = userData['updatedAt'] as DateTime?;
                       final dateStr = updatedAt != null
-                          ? '${updatedAt.toDate().day}/${updatedAt.toDate().month}/${updatedAt.toDate().year}'
+                          ? '${updatedAt.day}/${updatedAt.month}/${updatedAt.year}'
                           : 'N/A';
 
                       return Card(
@@ -111,6 +110,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 },
               ),
             ),
+
           ],
         ),
       ),

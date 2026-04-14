@@ -1,8 +1,48 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '../models/resume_model.dart';
 
 class FirestoreService {
-  static final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // Mock data storage
+  static final List<Map<String, dynamic>> _mockUsers = [
+    {
+      'name': 'John Doe',
+      'email': 'john@example.com',
+      'phone': '1234567890',
+      'summary': 'Experience software developer',
+      'skills': ['Flutter', 'Dart', 'Firebase'],
+      'updatedAt': DateTime.now().subtract(const Duration(days: 1)),
+    },
+    {
+      'name': 'Jane Smith',
+      'email': 'jane@work.com',
+      'phone': '9876543210',
+      'summary': 'Creative UI/UX designer',
+      'skills': ['Figma', 'Adobe XD', 'Sketch'],
+      'updatedAt': DateTime.now().subtract(const Duration(hours: 5)),
+    },
+  ];
+
+  static final List<Map<String, dynamic>> _mockTemplates = [
+    {
+      'id': 'temp_1',
+      'name': 'Modern Clean',
+      'category': 'Experienced',
+      'sections': ['Summary', 'Experience', 'Education', 'Skills'],
+      'createdAt': DateTime.now().subtract(const Duration(days: 10)),
+    },
+    {
+      'id': 'temp_2',
+      'name': 'Junior Classic',
+      'category': 'Fresher',
+      'sections': ['Summary', 'Education', 'Projects', 'Skills'],
+      'createdAt': DateTime.now().subtract(const Duration(days: 2)),
+    },
+  ];
+
+  static final StreamController<List<Map<String, dynamic>>> _usersController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+  static final StreamController<List<Map<String, dynamic>>> _templatesController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
 
   // =====================
   // USER RESUME DATA
@@ -10,25 +50,34 @@ class FirestoreService {
 
   /// Save or update a user's resume data
   static Future<void> saveUserResume(ResumeModel data) async {
-    await _db.collection('users').doc(data.email).set({
+    final index = _mockUsers.indexWhere((u) => u['email'] == data.email);
+    final userData = {
       'name': data.name,
       'email': data.email,
       'phone': data.phone,
       'summary': data.summary,
       'skills': data.skills,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+      'updatedAt': DateTime.now(),
+    };
+
+    if (index != -1) {
+      _mockUsers[index] = userData;
+    } else {
+      _mockUsers.add(userData);
+    }
+    _usersController.add(List.from(_mockUsers));
   }
 
-  /// Get all users (for admin dashboard)
-  static Stream<QuerySnapshot> getAllUsers() {
-    return _db.collection('users').orderBy('updatedAt', descending: true).snapshots();
+  /// Get all users (mock stream)
+  static Stream<List<Map<String, dynamic>>> getAllUsers() {
+    // Return a stream that emits current data immediately
+    Timer.run(() => _usersController.add(List.from(_mockUsers)));
+    return _usersController.stream;
   }
 
   /// Get total user count
   static Future<int> getUserCount() async {
-    final snapshot = await _db.collection('users').count().get();
-    return snapshot.count ?? 0;
+    return _mockUsers.length;
   }
 
   // =====================
@@ -41,21 +90,26 @@ class FirestoreService {
     required String category,
     required List<String> sections,
   }) async {
-    await _db.collection('templates').add({
+    _mockTemplates.add({
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
       'name': name,
       'category': category,
       'sections': sections,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': DateTime.now(),
     });
+    _templatesController.add(List.from(_mockTemplates));
   }
 
   /// Delete a template
-  static Future<void> deleteTemplate(String docId) async {
-    await _db.collection('templates').doc(docId).delete();
+  static Future<void> deleteTemplate(String id) async {
+    _mockTemplates.removeWhere((t) => t['id'] == id);
+    _templatesController.add(List.from(_mockTemplates));
   }
 
-  /// Get all templates (stream for real-time updates)
-  static Stream<QuerySnapshot> getTemplates() {
-    return _db.collection('templates').orderBy('createdAt', descending: true).snapshots();
+  /// Get all templates (mock stream)
+  static Stream<List<Map<String, dynamic>>> getTemplates() {
+    Timer.run(() => _templatesController.add(List.from(_mockTemplates)));
+    return _templatesController.stream;
   }
 }
+
